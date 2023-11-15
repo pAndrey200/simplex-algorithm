@@ -15,41 +15,6 @@ class Simplex{
         float maximum;
 
         bool isUnbounded;
-
-    public:
-        Simplex(std::vector <std::vector<float> > matrix,std::vector<float> b ,std::vector<float> c){
-            maximum = 0;
-            isUnbounded = false;
-            rows = matrix.size();
-            cols = matrix[0].size();
-            A.resize( rows , vector<float>( cols , 0 ) );
-            B.resize(b.size());
-            C.resize(c.size());
-
-
-
-
-            for(int i= 0;i<rows;i++){            
-                for(int j= 0; j< cols;j++ ){
-                    A[i][j] = matrix[i][j];
-
-                }
-            }
-
-
-
-            for(int i=0; i< c.size() ;i++ ){    
-                C[i] = c[i] ;
-            }
-            for(int i=0; i< b.size();i++ ){      
-                B[i] = b[i];
-            }
-
-
-
-
-        }
-
         bool simplexAlgorithmCalculataion(){
             if(checkOptimality()){
 			    return true;
@@ -78,71 +43,39 @@ class Simplex{
         }
 
         void doPivotting(int pivotRow, int pivotColumn){
-
-            float pivetValue = A[pivotRow][pivotColumn];//gets the pivot value
-
-            float pivotRowVals[cols];//the column with the pivot
-
-            float pivotColVals[rows];//the row with the pivot
-
-            float rowNew[cols];//the row after processing the pivot value
-
-            maximum = maximum - (C[pivotColumn]*(B[pivotRow]/pivetValue));  //set the maximum step by step
-             //get the row that has the pivot value
-             for(int i=0;i<cols;i++){
-                pivotRowVals[i] = A[pivotRow][i];
-             }
-             //get the column that has the pivot value
-             for(int j=0;j<rows;j++){
-                pivotColVals[j] = A[j][pivotColumn];
-            }
-
-            //set the row values that has the pivot value divided by the pivot value and put into new row
-             for(int k=0;k<cols;k++){
-                rowNew[k] = pivotRowVals[k]/pivetValue;
-             }
-
-            B[pivotRow] = B[pivotRow]/pivetValue;
-
-
-             //process the other coefficients in the A array by subtracting
-             for(int m=0;m<rows;m++){
-                //ignore the pivot row as we already calculated that
-                if(m !=pivotRow){
-                    for(int p=0;p<cols;p++){
-                        float multiplyValue = pivotColVals[m];
-                        A[m][p] = A[m][p] - (multiplyValue*rowNew[p]);
-                        //C[p] = C[p] - (multiplyValue*C[pivotRow]);
-                        //B[i] = B[i] - (multiplyValue*B[pivotRow]);
+            maximum = maximum - (C[pivotColumn]*(B[pivotRow]/A[pivotRow][pivotColumn]));
+            for(int i = 0; i < rows;i++){
+                for(int j = 0;j<cols;++j){
+                    if(i == pivotRow || j == pivotColumn){
+                        continue;
                     }
-
-                }
-             }
-
-            //process the values of the B array
-            for(int i=0;i<B.size();i++){
-                if(i != pivotRow){
-
-                        float multiplyValue = pivotColVals[i];
-                        B[i] = B[i] - (multiplyValue*B[pivotRow]);
-
+                    else{
+                        A[i][j] -= A[pivotRow][j] * A[i][pivotColumn] / A[pivotRow][pivotColumn];
+                    }
                 }
             }
-                //the least coefficient of the constraints of the objective function
-                float multiplyValue = C[pivotColumn];
-                //process the C array
-                 for(int i=0;i<C.size();i++){
-                    C[i] = C[i] - (multiplyValue*rowNew[i]);
-
+            for(int i = 0; i < rows;i++){
+                if(i != pivotRow){
+                    B[i] -= B[pivotRow] * A[i][pivotColumn] / A[pivotRow][pivotColumn];
                 }
-
-
-             //replacing the pivot row in the new calculated A array
-             for(int i=0;i<cols;i++){
-                A[pivotRow][i] = rowNew[i];
-             }
-
-
+            }
+            B[pivotRow]/=A[pivotRow][pivotColumn];
+            for(int i = 0; i < cols;i++){
+                if(i != pivotColumn){
+                    C[i] -= A[pivotRow][i] * C[pivotColumn] / A[pivotRow][pivotColumn];
+                }
+            }
+            C[pivotColumn] = 0;
+            for(int i = 0; i < rows;i++){
+                if(i != pivotRow){
+                    A[i][pivotColumn] = 0;
+                }
+            }
+            int pivotPoint = A[pivotRow][pivotColumn];
+            for(int i = 0; i < cols;i++){
+                A[pivotRow][i]/=pivotPoint;
+            }
+            
         }
 
         void print(){
@@ -150,9 +83,17 @@ class Simplex{
                 for(int j=0;j<cols;j++){
                     cout<<A[i][j] <<" ";
                 }
-                cout<<""<<endl;
+                cout<<endl;
             }
-            cout<<""<<endl;
+            cout<<endl;
+            for(int i=0; i<rows;i++){
+                cout << B[i] << "  ";
+            }
+            cout<<endl;
+            for(int i=0; i<cols;i++){
+                cout << C[i] << "  ";
+            }
+            cout <<endl << endl;
         }
 
         int findPivotColumn(){
@@ -199,6 +140,32 @@ class Simplex{
 
         }
 
+        
+
+    public:
+        Simplex(std::vector <std::vector<float> > matrix,std::vector<float> b ,std::vector<float> c){
+            maximum = 0;
+            isUnbounded = false;
+            rows = matrix.size();
+            cols = matrix[0].size();
+            A.resize( rows , vector<float>( cols , 0 ) );
+            B.resize(b.size());
+            C.resize(c.size());
+
+            for(int i= 0;i<rows;i++){            
+                for(int j= 0; j< cols;j++ ){
+                    A[i][j] = matrix[i][j];
+
+                }
+            }
+
+            for(int i=0; i< c.size() ;i++ ){    
+                C[i] = c[i] ;
+            }
+            for(int i=0; i< b.size();i++ ){      
+                B[i] = b[i];
+            }
+        }
         void CalculateSimplex(){
             bool end = false;
 
@@ -209,21 +176,11 @@ class Simplex{
             cout<<"final array(Optimal solution)"<<endl;
 
 
-            while(!end){
-
-                bool result = simplexAlgorithmCalculataion();
-
-                if(result==true){
-
-                    end = true;
-
-
-                    }
-            }
+            while(!simplexAlgorithmCalculataion()){}
             print();
             cout<<"Answers for the Constraints of variables"<<endl;
 
-            for(int i=0;i< A.size(); i++){  //every basic column has the values, get it form B array
+            for(int i=0;i< cols; i++){  //every basic column has the values, get it form B array
                 int count0 = 0;
                 int index = 0;
                 for(int j=0; j< rows; j++){
@@ -233,7 +190,6 @@ class Simplex{
                     else if(A[j][i]==1){
                         index = j;
                     }
-
 
                 }
 
@@ -248,12 +204,8 @@ class Simplex{
 
             }
 
-
            cout<<""<<endl;
            cout<<"maximum value: "<<maximum<<endl;  //print the maximum values
-
-
-
 
         }
 
